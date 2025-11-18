@@ -1,0 +1,10 @@
+[build]
+publish = "public"
+
+functions = "functions"
+
+[[redirects]]
+
+from = "/api/*"
+to = "/.functions/api/:splat"
+status = 200
