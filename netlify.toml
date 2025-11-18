@@ -1,10 +1,8 @@
 [build]
-publish = "public"
-
-functions = "functions"
+  functions = "functions"
+  publish = "public" # La carpeta que contiene tu index.html
 
 [[redirects]]
-
-from = "/api/*"
-to = "/.functions/api/:splat"
-status = 200
+  from = "/*"
+  to = "/index.html"
+  status = 200
