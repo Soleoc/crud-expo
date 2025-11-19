@@ -1,43 +1,417 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD Netlify + MongoDB Atlas</title>
+    <meta charset="utf-8" />
+    <title>Inventario Abarrotes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        #crud-form { display: flex; gap: 10px; margin-bottom: 20px; }
-        #items-list { list-style: disc; padding-left: 20px; }
-        #items-list li { margin-bottom: 8px; padding: 5px; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; align-items: center; }
-        .action-button { margin-left: 10px; padding: 5px 10px; cursor: pointer; }
+        .card-body h4 {
+            margin-top: 0 !important;
+            margin-bottom: 4px !important;
+        }
+
+        .card-body {
+            padding-top: 10px !important;
+            padding-bottom: 5px !important;
+        }
+
+        .low-stock {
+            background-color: #ffdddd !important;
+        }
     </style>
 </head>
-<body>
-    
-    <h1>Gestión de Elementos CRUD</h1>
-    
-    <p>Introduce un nuevo elemento (ej. Nombre de Tarea o Producto) y presiona "Crear".</p>
-    
-    <hr>
-    
-    <form id="crud-form">
-        <input 
-            type="text" 
-            id="item-name" 
-            placeholder="Nombre del nuevo elemento" 
-            required 
-            style="flex-grow: 1; padding: 10px;"
-        >
-        <button type="submit" id="submit-button">➕ Crear Elemento</button>
-    </form>
-    
-    <hr>
 
-    <h2>Lista de Elementos Existentes</h2>
-    <ul id="items-list">
-        <li>Cargando elementos...</li> 
-        </ul>
+<body style="background-color: lightsteelblue;">
+    <div class="container py-4">
 
-    <script src="script.js"></script>
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h4>Registrar Producto</h4>
+                <label>Registra productos del inventario con datos completos</label>
+
+                <form id="productoForm">
+
+                    <div class="row mt-2">
+                        <div class="col-4 mb-2">
+                            <label>Código:</label>
+                            <input type="text" id="codigo" class="form-control" required>
+                        </div>
+                        <div class="col-4 mb-2">
+                            <label>Nombre:</label>
+                            <input type="text" id="nombre" class="form-control" required>
+                        </div>
+                        <div class="col-4 mb-2">
+                            <label>Marca:</label>
+                            <input type="text" id="marca" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-4 mb-2">
+                            <label>Categoría:</label>
+                            <select id="categoria" class="form-select" required>
+                                <option value="" disabled selected>-Selecciona-</option>
+                                <option>Granos</option>
+                                <option>Lácteos</option>
+                                <option>Bebidas</option>
+                                <option>Enlatados</option>
+                                <option>Snacks</option>
+                                <option>Aseo</option>
+                            </select>
+                        </div>
+
+                        <div class="col-4 mb-2">
+                            <label>Unidad:</label>
+                            <select id="unidad" class="form-select">
+                                <option>Pieza</option>
+                                <option>Kilo</option>
+                                <option>Litro</option>
+                                <option>Paquete</option>
+                            </select>
+                        </div>
+
+                        <div class="col-4 mb-2">
+                            <label>Proveedor:</label>
+                            <input type="text" id="proveedor" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-3 mb-2">
+                            <label>Costo (MXN):</label>
+                            <input type="number" id="costo" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="col-3 mb-2">
+                            <label>Precio Venta (MXN):</label>
+                            <input type="number" id="precio" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="col-3 mb-2">
+                            <label>Ganancia:</label>
+                            <input type="number" id="ganancia" class="form-control" step="0.01" readonly>
+                        </div>
+                        <div class="col-3 mb-2">
+                            <label>Cantidad:</label>
+                            <input type="number" id="cantidad" class="form-control" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-3 mb-2">
+                            <label>Stock mínimo:</label>
+                            <input type="number" id="minimo" class="form-control" min="0" value="5">
+                        </div>
+                        <div class="col-3 mb-2">
+                            <label>Caducidad:</label>
+                            <input type="date" id="caducidad" class="form-control">
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label>Descripción:</label>
+                            <input type="text" id="descripcion" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="d-flex mt-3">
+                        <button type="submit" class="btn btn-primary me-2 flex-grow-1" id="btnGuardar">Guardar producto</button>
+                        <button type="button" class="btn btn-secondary me-2" id="btnCancelar" style="display:none;">Cancelar</button>
+                        <button type="reset" class="btn btn-danger">Limpiar</button>
+                    </div>
+
+                    <div class="text-center mt-2 d-none text-success" id="msg">Guardado correctamente</div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4>Inventario</h4>
+                <label>Productos registrados en el sistema</label>
+
+                <div class="row mt-2 mb-2">
+                    <div class="col-4"><b id="totalProductos">Total productos: 0</b></div>
+                    <div class="col-4"><b id="valorInventario">Valor inventario: $0</b></div>
+                </div>
+
+                <div style="max-height: 500px; overflow:auto;">
+                    <table class="table table-striped" id="tabla">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Código</th>
+                                <th>Producto</th>
+                                <th>Marca</th>
+                                <th>Categoría</th>
+                                <th>Unidad</th>
+                                <th>Precio</th>
+                                <th>Cantidad</th>
+                                <th>Total</th>
+                                <th>Proveedor</th>
+                                <th>Caducidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaDatos">
+                            <tr><td colspan="12" class="text-center">Cargando elementos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ====================================================================
+        // INICIO DEL JAVASCRIPT: MIGRADO A CRUD ASÍNCRONO (NETLIFY + MONGODB)
+        // ====================================================================
+
+        const API_URL = '/.netlify/functions/api';
+        let productoEditandoId = null; 
+
+        // Elementos del DOM
+        const form = document.getElementById("productoForm");
+        const msg = document.getElementById("msg");
+        const tablaDatos = document.getElementById("tablaDatos");
+        const btnCancelar = document.getElementById("btnCancelar");
+        const btnGuardar = document.getElementById("btnGuardar");
+        const totalProductos = document.getElementById("totalProductos");
+        const valorInventario = document.getElementById("valorInventario");
+
+        // Campos de formulario a recolectar
+        const fields = [
+            "codigo", "nombre", "marca", "categoria", "unidad", "proveedor",
+            "costo", "precio", "ganancia", "cantidad", "minimo", "caducidad", "descripcion"
+        ];
+
+        // --- FUNCIONES UTILITARIAS ---
+
+        document.getElementById("precio").addEventListener("input", calcGanancia);
+        document.getElementById("costo").addEventListener("input", calcGanancia);
+
+        function calcGanancia() {
+            const costo = parseFloat(document.getElementById("costo").value) || 0;
+            const precio = parseFloat(document.getElementById("precio").value) || 0;
+            // Asegúrate de que la ganancia se calcula correctamente
+            document.getElementById("ganancia").value = (precio - costo).toFixed(2);
+        }
+
+        function actualizarResumen(productos) {
+            totalProductos.textContent = `Total productos: ${productos.length}`;
+            // Calculamos el valor total en inventario basado en el precio de venta y la cantidad
+            const valor = productos.reduce((acc, p) => acc + (p.precio || 0) * (p.cantidad || 0), 0);
+            valorInventario.textContent = `Valor inventario: $${valor.toFixed(2)}`;
+        }
+
+        function resetFormulario() {
+            form.reset();
+            productoEditandoId = null;
+            btnCancelar.style.display = "none";
+            btnGuardar.textContent = "Guardar producto";
+        }
+
+
+        // ----------------------------------------------------------------------
+        // FUNCIONES CRUD ASÍNCRONAS (NETLIFY + MONGODB)
+        // ----------------------------------------------------------------------
+
+        /**
+         * Función READ (GET): Obtiene todos los productos y renderiza la tabla.
+         */
+        async function mostrarTabla() {
+            try {
+                tablaDatos.innerHTML = `<tr><td colspan="12" class="text-center">Cargando datos de MongoDB...</td></tr>`;
+                
+                const response = await fetch(API_URL, { method: 'GET' });
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP! Status: ${response.status}`);
+                }
+
+                const productos = await response.json(); 
+                tablaDatos.innerHTML = "";
+                
+                productos.forEach((p, i) => {
+                    // Verificación de datos numéricos
+                    const precio = p.precio ? parseFloat(p.precio).toFixed(2) : '0.00';
+                    const cantidad = p.cantidad ? parseInt(p.cantidad) : 0;
+                    const minimo = p.minimo ? parseInt(p.minimo) : 0;
+                    const total = (parseFloat(precio) * cantidad).toFixed(2);
+                    const rowClass = cantidad <= minimo ? "low-stock" : "";
+
+                    tablaDatos.innerHTML += `
+                        <tr class="${rowClass}" data-id="${p._id}">
+                            <td>${i + 1}</td>
+                            <td>${p.codigo || '-'}</td>
+                            <td>${p.nombre || '-'}</td>
+                            <td>${p.marca || '-'}</td>
+                            <td>${p.categoria || '-'}</td>
+                            <td>${p.unidad || '-'}</td>
+                            <td>$${precio}</td>
+                            <td>${cantidad}</td>
+                            <td>$${total}</td>
+                            <td>${p.proveedor || '-'}</td>
+                            <td>${p.caducidad || '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="cargarParaEditar('${p._id}')">✏</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="eliminarProducto('${p._id}')">🗑</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                actualizarResumen(productos);
+                
+            } catch (error) {
+                console.error('Error al cargar la tabla (READ):', error);
+                tablaDatos.innerHTML = `<tr><td colspan="12" class="text-center text-danger">Error: No se pudo conectar con el backend.</td></tr>`;
+            }
+        }
+
+
+        /**
+         * Función CREATE/UPDATE (POST/PUT): Guarda o edita un producto.
+         */
+        async function guardarProducto(producto) {
+            const isUpdating = productoEditandoId !== null;
+            const method = isUpdating ? 'PUT' : 'POST';
+            
+            let url = API_URL;
+            if (isUpdating) {
+                // Para UPDATE, el backend espera el ID en el query parameter
+                url += `?id=${productoEditandoId}`; 
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(producto)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error del servidor al ${isUpdating ? 'actualizar' : 'crear'} (${response.statusText})`);
+                }
+
+                resetFormulario();
+                
+                // Mostrar mensaje de éxito
+                msg.classList.remove("d-none");
+                setTimeout(() => msg.classList.add("d-none"), 1500);
+
+                mostrarTabla(); // Recarga la tabla con el nuevo/modificado dato
+                
+            } catch (error) {
+                console.error('Fallo en la operación de guardado:', error);
+                alert(`Error: ${error.message}. No se pudo ${isUpdating ? 'actualizar' : 'crear'} el producto.`);
+            }
+        }
+
+        /**
+         * Función DELETE: Elimina un producto por su _id.
+         */
+        async function eliminarProducto(id) {
+            if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+
+            try {
+                const response = await fetch(`${API_URL}?id=${id}`, {
+                    method: 'DELETE' // Usa el método DELETE
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error al eliminar (${response.statusText})`);
+                }
+                
+                mostrarTabla(); // Recarga la tabla
+                
+            } catch (error) {
+                console.error('Fallo al eliminar:', error);
+                alert(`Error: ${error.message}. No se pudo eliminar el producto.`);
+            }
+        }
+
+
+        // ----------------------------------------------------------------------
+        // MANEJO DE EDICIÓN Y LISTENERS
+        // ----------------------------------------------------------------------
+
+        // Nota: Esta función asume que los datos están cargados en el backend,
+        // pero la implementación ideal es hacer un GET por ID para cargar los datos completos.
+        async function cargarParaEditar(id) {
+            try {
+                // 1. Obtener los datos completos del item a editar usando GET por ID
+                const response = await fetch(`${API_URL}?id=${id}`, { method: 'GET' });
+                
+                if (!response.ok) {
+                    throw new Error("No se pudo obtener el producto para editar.");
+                }
+                
+                // Nota: Tu backend solo soporta GET (READ ALL) por ahora. 
+                // Para simplificar, la función GET del backend debe ser modificada para soportar un GET por ID.
+                
+                // *************************************************************
+                // SOLUCIÓN TEMPORAL: Ya que el GET del backend solo trae TODOS
+                // *************************************************************
+                const allProducts = await response.json();
+                const p = allProducts.find(prod => prod._id === id);
+                // *************************************************************
+
+                if (!p) {
+                    alert("Producto no encontrado.");
+                    return;
+                }
+
+                // 2. Llenar el formulario con los datos del producto
+                document.getElementById("codigo").value = p.codigo || '';
+                document.getElementById("nombre").value = p.nombre || '';
+                document.getElementById("marca").value = p.marca || '';
+                document.getElementById("categoria").value = p.categoria || '';
+                document.getElementById("unidad").value = p.unidad || 'Pieza';
+                document.getElementById("proveedor").value = p.proveedor || '';
+                document.getElementById("costo").value = p.costo || 0;
+                document.getElementById("precio").value = p.precio || 0;
+                document.getElementById("cantidad").value = p.cantidad || 0;
+                document.getElementById("minimo").value = p.minimo || 5;
+                document.getElementById("caducidad").value = p.caducidad || '';
+                document.getElementById("descripcion").value = p.descripcion || '';
+                
+                calcGanancia(); // Recalcula la ganancia
+
+                // 3. Poner el modo de edición
+                productoEditandoId = id;
+                btnCancelar.style.display = "inline-block";
+                btnGuardar.textContent = "Guardar cambios";
+
+            } catch (error) {
+                console.error("Error al cargar producto para editar:", error);
+                alert("Error al cargar los datos para edición.");
+            }
+        }
+
+
+        // Listener principal del formulario (CREATE o UPDATE)
+        form.addEventListener("submit", e => {
+            e.preventDefault();
+
+            // 1. Recoger datos de todos los inputs en un objeto limpio
+            const producto = {};
+            fields.forEach(field => {
+                let value = document.getElementById(field).value;
+                if (field === 'costo' || field === 'precio' || field === 'ganancia') {
+                    producto[field] = parseFloat(value) || 0;
+                } else if (field === 'cantidad' || field === 'minimo') {
+                    producto[field] = parseInt(value) || 0;
+                } else {
+                    producto[field] = value.trim();
+                }
+            });
+
+            // 2. Llamar a la función CRUD (POST o PUT)
+            guardarProducto(producto);
+        });
+
+        btnCancelar.addEventListener("click", resetFormulario);
+
+        // 3. Inicializar la tabla al cargar la página (Llamada READ)
+        document.addEventListener('DOMContentLoaded', mostrarTabla);
+    </script>
 </body>
 </html>

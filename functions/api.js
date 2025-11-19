@@ -8,53 +8,120 @@ let client = null; // 3. Caching de conexi�n
 const connectToDatabase = async () => {
     if (client && client.isConnected && client.isConnected()) {
         return client;
+
     }
     
     if (!MONGODB_URI) {
         throw new Error('MONGODB_URI no está definida. Configúrala en Netlify.');
     }
 
-    // 🛑 ¡CAMBIO AQUÍ! Elimina el objeto de opciones.
-    // Antes: client = new MongoClient(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-    
-    client = new MongoClient(MONGODB_URI); 
+   
+ client = new MongoClient(MONGODB_URI); 
     
     await client.connect(); 
     return client;
 };
 
+
 exports.handler = async (event, context) => {
-    context.callbackWaitsForEmptyEventLoop = false; // 7. Serverless Optimization
+    context.callbackWaitsForEmptyEventLoop = false; 
 
     try {
-        const connection = await connectToDatabase(); // 8. Iniciar/Reusar conexi�n
-        const db = connection.db(DB_NAME); // 9. Seleccionar BD
-        const collection = db.collection(COLLECTION_NAME); // 10. Seleccionar Colecci�n
+        const connection = await connectToDatabase();
+        const db = connection.db(DB_NAME);
+        const collection = db.collection(COLLECTION_NAME);
 
         let response = {};
+        
+        // El ID del documento se espera en los query parameters para UPDATE y DELETE
+        const itemId = event.queryStringParameters ? event.queryStringParameters.id : null;
+        
+        switch (event.httpMethod) {
+            
+            // ----------------------------------------------------
+            // CREATE (POST): Crear un nuevo producto
+            // ----------------------------------------------------
+            case 'POST':
+                const newProductData = JSON.parse(event.body);
+                // MongoDB creará automáticamente el campo _id
+                const insertResult = await collection.insertOne(newProductData);
 
-        if (event.httpMethod === 'GET') { // 11. Manejo de M�todo HTTP (READ)
+                response = {
+                    statusCode: 201, // Creado
+                    body: JSON.stringify({ message: "Producto creado", id: insertResult.insertedId }),
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                break;
+                
+            // ----------------------------------------------------
+            // READ (GET): Leer todos los productos
+            // ----------------------------------------------------
+            case 'GET':
+                const items = await collection.find({}).toArray();
+                response = {
+                    statusCode: 200, // OK
+                    body: JSON.stringify(items),
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                break;
 
-            // 12. Consulta a MongoDB: Buscar todos los documentos
-            const items = await collection.find({}).toArray();
+            // ----------------------------------------------------
+            // UPDATE (PUT): Actualizar un producto existente
+            // ----------------------------------------------------
+            case 'PUT':
+                if (!itemId) {
+                    return { statusCode: 400, body: JSON.stringify({ error: "Falta el ID para actualizar." }) };
+                }
+                const updateData = JSON.parse(event.body);
+                
+                // 🛑 Usamos ObjectId para buscar por el _id de MongoDB
+                const updateResult = await collection.updateOne(
+                    { _id: new ObjectId(itemId) }, 
+                    { $set: updateData }
+                );
 
-            // 13. Formato de Respuesta de �xito
-            response = {
-                statusCode: 200, // 14. C�digo HTTP 200 (OK)
-                body: JSON.stringify(items), // 15. Serializar Objeto a JSON
-                headers: { 'Content-Type': 'application/json' }
-            };
-        } else {
-            response = { statusCode: 405, body: 'M�todo no permitido' }; // 16. Fallo
+                response = {
+                    statusCode: 200, // OK
+                    body: JSON.stringify({ 
+                        message: "Producto actualizado", 
+                        modifiedCount: updateResult.modifiedCount 
+                    }),
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                break;
+
+            // ----------------------------------------------------
+            // DELETE (DELETE): Eliminar un producto
+            // ----------------------------------------------------
+            case 'DELETE':
+                if (!itemId) {
+                    return { statusCode: 400, body: JSON.stringify({ error: "Falta el ID para eliminar." }) };
+                }
+
+                // 🛑 Usamos ObjectId para buscar por el _id de MongoDB
+                const deleteResult = await collection.deleteOne({ _id: new ObjectId(itemId) });
+
+                response = {
+                    statusCode: 200, // OK
+                    body: JSON.stringify({ 
+                        message: "Producto eliminado", 
+                        deletedCount: deleteResult.deletedCount 
+                    }),
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                break;
+
+            default:
+                response = { statusCode: 405, body: 'Método no permitido' };
         }
 
-        return response; // 17. Devolver respuesta a Netlify
+        return response;
 
     } catch (error) {
         console.error("Error al procesar la solicitud:", error);
         return {
-            statusCode: 500, // 18. C�digo HTTP 500 (Error de Servidor)
-            body: JSON.stringify({ error: error.message })
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Error del servidor: ' + error.message })
         };
     }
 };
