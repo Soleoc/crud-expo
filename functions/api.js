@@ -1,4 +1,4 @@
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = "CRUD-EXPO";     // 1.
 const COLLECTION_NAME = "CRUD-1";  // 2.
