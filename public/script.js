@@ -140,7 +140,8 @@ async function guardarProducto(producto) {
  * Función DELETE: Elimina un producto por su _id.
  */
 async function eliminarProducto(id) {
-    if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+    if (!confirm("¿Estás seguro de eliminar este producto?")) 
+        return;
 
     try {
         const response = await fetch(`${API_URL}?id=${id}`, {
